@@ -25,6 +25,7 @@ def patched_torch_load(f, map_location=None, **kwargs):
 
 torch.load = patched_torch_load
 
+@st.cache_resource  # 👈 Add the caching decorator
 def load_model():
     try:
         map_location = torch.device('cpu')
