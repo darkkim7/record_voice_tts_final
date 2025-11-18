@@ -118,3 +118,42 @@ for i, msg in enumerate(st.session_state.messages):
                 embed = embed.replace('<audio controls>', '<audio controls autoplay>')
             content = '\n\n'.join([content, embed])
         st.markdown(content, unsafe_allow_html=True)
+
+if (prompt := st.chat_input("Your message")):
+    content = prompt
+    with st.chat_message("user"):
+        st.markdown(content, unsafe_allow_html=True)
+    
+    # Add user message to chat history
+    st.session_state.messages.append({
+        "role": "user", 
+        "content": content
+    })
+
+    with st.chat_message("assistant"):
+        with st.spinner():
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                temperature=0,
+                max_tokens=1024,
+                google_api_key = gemini_api_key
+            )
+            translate_dict = language_options()
+            translate_lang = translate_dict[lang]
+            llm_response = llm.invoke(
+                prompt + f"\nplease answer {translate_lang}, and answer Keep it short, under 300 characters"
+            ).content
+            st.markdown(llm_response)
+            tts_embed = tts_inference(
+                llm_response,
+                tmp_path,
+                TTS_MODEL,
+                translate_lang
+            )
+            st.markdown(
+                '\n\n'.join([tts_embed]),
+                unsafe_allow_html=True
+            )
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": llm_response, "tts_embed": tts_embed})
+    st.rerun()
